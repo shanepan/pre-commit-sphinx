@@ -14,12 +14,12 @@ def requires_build(filenames: Sequence[str], always_build: bool) -> bool:
     return True
 
 
-def build(cache_dir: str, html_dir: str, src_dir: str):
+def build(cache_dir: str, html_dir: str, src_dir: str, build_cmd: str):
     """ Invokes sphinx-build to build the docs
     """
 
     # Run Sphinx to build the documentation
-    ret = os.system(f'sphinx-build -b html -d {cache_dir} {src_dir} {html_dir}')
+    ret = os.system(f'{build_cmd} -b html -d {cache_dir} {src_dir} {html_dir}')
 
     # It's very weird that pre-commit marks this as 'PASSED' if I return an error code 512...! Workaround:
     return 0 if ret == 0 else 1
@@ -33,8 +33,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         '--always-build', type=bool, default=True,
-        help='Always rebuild, even if no doc files have changed (useful if using \
-             breathe/exhale to extract docstrings from code)',
+        help='Always rebuild, even if no doc files have changed (useful if using '
+             'breathe/exhale to extract docstrings from code)',
     )
     parser.add_argument(
         '--cache-dir', type=str, default='docs/doctrees',
@@ -48,10 +48,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         '--source-dir', type=str, default='docs/source',
         help='Directory containing documentation sources (where the conf.py file exists)',
     )
+    parser.add_argument(
+        '--build-cmd', type=str, default='sphinx-build',
+        help='The command that will be ran when building the docs.'
+             ' For example "pipenv run sphinx-build" can be used if '
+             'sphinx is used with pipenv.',
+    )
 
     args = parser.parse_args(argv)
     if requires_build(args.filenames, args.always_build):
-        return build(args.cache_dir, args.html_dir, args.source_dir)
+        return build(args.cache_dir, args.html_dir, args.source_dir, args.build_cmd)
 
     return 0
 
